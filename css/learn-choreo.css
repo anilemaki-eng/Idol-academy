@@ -1,0 +1,142 @@
+/* Training > Dance > Learn Choreo */
+
+/* Choose a video */
+.lc-picker {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lc-pick {
+  display: block;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+/* Learning one video: kept to a comfortable width on big screens */
+.lc-area {
+  max-width: 720px;
+}
+
+.lc-title {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.lc-error {
+  color: #b00020;
+}
+
+.lc-error a {
+  color: inherit;
+}
+
+/* The video, 16:9 */
+.lc-video {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.lc-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.lc-status {
+  margin: 8px 0;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons: big enough to tap while practising */
+.lc-ui button {
+  min-height: 48px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.lc-controls,
+.lc-mark {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lc-mark {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 8px;
+}
+
+/* Slower | Speed 0.30× | Faster */
+.lc-speed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lc-speed-value {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.lc-speed-value strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.lc-speed-note,
+.lc-message {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+}
+
+.lc-message:empty {
+  display: none;
+}
+
+.lc-sections-title {
+  margin: 24px 0 8px;
+}
+
+.lc-sections {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lc-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.lc-section-play {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The section you're learning */
+.lc-section-play[aria-current="true"] {
+  font-weight: bold;
+  outline: 2px solid #111;
+  outline-offset: -2px;
+}
+
+.lc-section-delete {
+  flex: none;
+}

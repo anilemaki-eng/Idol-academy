@@ -1,0 +1,240 @@
+/* Schedule: calendar and day board */
+
+/* ----- Calendar ----- */
+
+.cal-month h2 {
+  margin: 24px 0 8px;
+}
+
+/* 7 equal columns, Sunday to Saturday */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cal-weekday {
+  padding: 4px 0;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.cal-day {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 56px;
+  padding-top: 8px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cal-day span {
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+/* Today */
+.cal-day.today span {
+  background: #f3a6dc;
+  font-weight: bold;
+}
+
+/* ----- Day board: one day as hours, like a phone calendar ----- */
+
+/* Back link and date stay at the top while you scroll through the hours */
+.board-header {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 1;
+  padding-bottom: 8px;
+  background: #fff;
+}
+
+.board-back {
+  display: inline-block;
+  padding: 8px 0;
+  color: inherit;
+}
+
+/* "October 2026" with the weekday and day number beside it */
+.day-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 0;
+  font-size: 1.75rem;
+}
+
+.day-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: normal;
+}
+
+.day-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.day-pill.today .day-number {
+  background: #f3a6dc;
+}
+
+.board-error {
+  color: #b00020;
+}
+
+/* Hour labels on the left, a box for each hour on the right */
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hour {
+  display: flex;
+  gap: 12px;
+}
+
+.hour-label {
+  flex: none;
+  width: 3em;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hour-slot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 56px;
+  border-radius: 8px;
+  background: #f0f0f0;
+}
+
+/* The empty part of each box: tap it to add a plan */
+.hour-add {
+  flex: 1;
+  width: 100%;
+  min-height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+
+.hour-add:focus-visible {
+  outline: 2px solid #111;
+}
+
+/* Plans inside an hour */
+.hour-plans {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 0;
+}
+
+.plan-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-label input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.plan-time {
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.plan-delete {
+  flex: none;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 4px 8px;
+}
+
+/* Add form inside an hour's box */
+.plan-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+
+.plan-form input {
+  font: inherit;
+  font-size: 1rem;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.plan-form input[type="text"] {
+  flex: 1;
+  min-width: 160px;
+}
+
+.plan-form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.plan-form button {
+  font: inherit;
+  padding: 8px 16px;
+}
+
+/* Today's current-time line, with a dot at its start */
+.now-line {
+  position: absolute;
+  right: 0;
+  height: 2px;
+  background: #111;
+  pointer-events: none;
+}
+
+.now-line::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #111;
+}

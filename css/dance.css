@@ -1,0 +1,106 @@
+/* Training > Dance */
+
+/* The three buttons: side by side, equal width */
+.dance-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dance-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+
+.dance-button:focus-visible {
+  outline: 2px solid #111;
+}
+
+.dance-back {
+  display: inline-block;
+  padding: 8px 0;
+  color: inherit;
+}
+
+/* ----- Practice videos ----- */
+
+.videos-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One video: name (opens YouTube) and Delete */
+.video {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.video-link {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: inherit;
+}
+
+.video-delete {
+  flex: none;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 4px 8px;
+}
+
+.videos-error,
+.videos-form-error {
+  color: #b00020;
+}
+
+/* Add form: name and link one under the other */
+.videos-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.videos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.videos-form-error {
+  margin: 0;
+}
+
+.videos-form input,
+.videos-form button {
+  font: inherit;
+  font-size: 1rem;
+}
+
+.videos-form input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.videos-form button {
+  padding: 8px 20px;
+}
