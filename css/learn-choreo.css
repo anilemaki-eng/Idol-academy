@@ -18,6 +18,8 @@
 /* Learning one video: kept to a comfortable width on big screens */
 .lc-area {
   max-width: 720px;
+  /* Tall enough that the video can always scroll to the top of the screen */
+  min-height: 100vh;
 }
 
 .lc-title {
@@ -64,16 +66,26 @@
   font-size: 1rem;
 }
 
-.lc-controls,
-.lc-mark {
+/* Marking: Play | New section starts here (wider) */
+.lc-mark-controls,
+.lc-learn-buttons {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 8px;
 }
 
-.lc-mark {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.lc-learn-buttons {
   margin-top: 8px;
+}
+
+/* The step's main button stands out */
+.lc-ui .lc-main {
+  font-weight: bold;
+}
+
+.lc-help {
+  margin: 12px 0 0;
+  font-size: 0.875rem;
 }
 
 /* Slower | Speed 0.30× | Faster */
@@ -106,37 +118,11 @@
   display: none;
 }
 
-.lc-sections-title {
-  margin: 24px 0 8px;
+.lc-next-hint {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
 }
 
-.lc-sections {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lc-section {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-}
-
-.lc-section-play {
-  flex: 1;
-  min-width: 0;
-  text-align: left;
-  font-variant-numeric: tabular-nums;
-}
-
-/* The section you're learning */
-.lc-section-play[aria-current="true"] {
-  font-weight: bold;
-  outline: 2px solid #111;
-  outline-offset: -2px;
-}
-
-.lc-section-delete {
-  flex: none;
+.lc-redo-row {
+  margin: 24px 0 0;
 }
