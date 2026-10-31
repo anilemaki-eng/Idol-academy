@@ -11,8 +11,12 @@ App.dance.renderView['learn-choreo'] = function (container, videoKey) {
 };
 
 // ----- Choose a video -----
+// Also used by Compare: viewId is the view the chosen video opens in
+// ('learn-choreo' or 'compare'), prompt the line shown above the list.
 
-App.dance.renderLearnPicker = function (container) {
+App.dance.renderLearnPicker = function (container, viewId, prompt) {
+  viewId = viewId || 'learn-choreo';
+  prompt = prompt || 'Choose a video to learn.';
   container.innerHTML = `
     <p class="lc-note">Loading&hellip;</p>
     <ul class="lc-picker"></ul>`;
@@ -29,12 +33,12 @@ App.dance.renderLearnPicker = function (container) {
           '<a href="#training-dance">Dance practice videos</a> first.';
         return;
       }
-      note.textContent = 'Choose a video to learn.';
+      note.textContent = prompt;
       items.forEach(function (item) {
         const row = document.createElement('li');
         const link = document.createElement('a');
         link.className = 'lc-pick';
-        link.href = '#training-dance-learn-choreo-' + item.id;
+        link.href = '#training-dance-' + viewId + '-' + item.id;
         link.textContent = item.name;
         row.appendChild(link);
         list.appendChild(row);

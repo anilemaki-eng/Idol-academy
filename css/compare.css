@@ -1,0 +1,131 @@
+/* Training > Dance > Compare */
+
+/* Tall enough that the videos can always scroll to the top of the screen */
+.cmp-area {
+  min-height: 100vh;
+}
+
+.cmp-title {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.cmp-error,
+.cmp-my-error {
+  color: #b00020;
+}
+
+.cmp-error a {
+  color: inherit;
+}
+
+.cmp-pick p {
+  margin: 0 0 8px;
+}
+
+/* "Choose my video": a label that looks like a button; the real file
+   picker inside it is hidden but still works */
+.cmp-pick-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  background: #efefef;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cmp-pick-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.cmp-pick-button:focus-within {
+  outline: 2px solid #111;
+}
+
+.cmp-private {
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+
+/* The two videos: one under the other on a phone held upright,
+   side by side on wider screens or a phone turned sideways */
+.cmp-videos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+@media (min-width: 600px), (orientation: landscape) {
+  #cmp-my-video {
+    max-height: 55vh;
+  }
+
+  .cmp-videos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.cmp-video {
+  margin: 0;
+  min-width: 0;
+}
+
+.cmp-video figcaption {
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+/* Practice video, 16:9 */
+.cmp-pro {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.cmp-pro iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Your video: whole picture visible, upright or sideways */
+#cmp-my-video {
+  display: block;
+  width: 100%;
+  /* Small enough on an upright phone that both videos and the buttons fit */
+  max-height: 36vh;
+  background: #000;
+  object-fit: contain;
+}
+
+.cmp-help {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+}
+
+.cmp-buttons {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cmp-buttons button {
+  min-height: 48px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1rem;
+}

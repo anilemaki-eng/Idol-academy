@@ -4,6 +4,7 @@
 // #training-dance-learn-choreo  -> Learn Choreo (learn-choreo.js)
 // #training-dance-learn-choreo-<video id> -> Learn Choreo with that video
 // #training-dance-compare       -> Compare (compare.js)
+// #training-dance-compare-<video id> -> Compare with that video
 App.dance = App.dance || {};
 App.dance.renderView = App.dance.renderView || {}; // filled in by each view's file
 
@@ -12,7 +13,7 @@ App.dance.renderView = App.dance.renderView || {}; // filled in by each view's f
 App.dance.views = [
   { id: 'warming-up', label: 'Warming Up' },
   { id: 'learn-choreo', label: 'Learn Choreo', hasDetail: true },
-  { id: 'compare', label: 'Compare' }
+  { id: 'compare', label: 'Compare', hasDetail: true }
 ];
 
 App.registerPage('/training/dance', function (container, detail) {
