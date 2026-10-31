@@ -6,18 +6,18 @@
 //    playing and starts the next one. When the video reaches its end, the
 //    last section ends there and the sections are saved.
 //
-// 2. Learn: Section 1 repeats on its own, starting at 0.30x. Slower / Faster
+// 2. Learn: Section 1 repeats on its own, starting at 0.50x. Slower / Faster
 //    change the speed by 0.10x while it repeats. "Next section" appears only
-//    once the speed is back to 1.00x; the next section starts again at 0.30x.
+//    once the speed is back to 1.00x; the next section starts again at 0.50x.
 //
 // Sections are saved under 'dance-choreo/<video id>' as
 // { sections: [{ id, start, end }] } (times in seconds).
 App.dance = App.dance || {};
 
 App.dance.renderLearnPlayer = function (container, videoKey) {
-  const LEARN_START_SPEED = 0.3;
+  const LEARN_START_SPEED = 0.5;
   const MARK_SPEED = 1;
-  const MIN_SPEED = 0.3;
+  const MIN_SPEED = 0.5;
   const MAX_SPEED = 1;
   const SPEED_STEP = 0.1;
   const sectionsPath = 'dance-choreo/' + videoKey;
@@ -56,7 +56,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
         <div class="lc-learn-controls" hidden>
           <div class="lc-speed">
             <button type="button" id="lc-slower">&minus; Slower</button>
-            <p class="lc-speed-value">Speed <strong id="lc-speed">0.30&times;</strong></p>
+            <p class="lc-speed-value">Speed <strong id="lc-speed">0.50&times;</strong></p>
             <button type="button" id="lc-faster">Faster +</button>
           </div>
           <p class="lc-speed-note" hidden></p>
@@ -109,7 +109,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     return minutes + ':' + (rest < 10 ? '0' : '') + rest;
   }
 
-  // 0.3 -> '0.30×'
+  // 0.5 -> '0.50×'
   function formatSpeed(rate) {
     return rate.toFixed(2) + '×';
   }
@@ -173,7 +173,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   }
 
   // The speed one tap of Faster (direction +1) or Slower (-1) goes to, or
-  // null if there's nowhere to go. Steps by 0.10x, between 0.30x and 1x; if
+  // null if there's nowhere to go. Steps by 0.10x, between 0.50x and 1x; if
   // YouTube doesn't allow that speed, keeps stepping until the speed it
   // plays really changes.
   function speedStep(direction) {
