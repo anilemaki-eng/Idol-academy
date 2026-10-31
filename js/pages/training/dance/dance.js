@@ -39,17 +39,15 @@ App.registerPage('/training/dance', function (container, detail) {
     return;
   }
 
-  if (extra) {
-    // Inside a view (e.g. one video in Learn Choreo): the view draws its own heading
-    container.innerHTML = `
-      <p><a href="#training-dance-${view.id}" class="dance-back">&larr; Back to ${view.label}</a></p>
-      <div class="dance-view"></div>`;
-  } else {
-    container.innerHTML = `
-      <p><a href="#training-dance" class="dance-back">&larr; Back to Dance</a></p>
-      <h3>${view.label}</h3>
-      <div class="dance-view"></div>`;
-  }
+  // Each view is a page of its own: a back link and the view's name on top
+  const back = extra
+    ? `<a href="#training-dance-${view.id}" class="dance-back">&larr; Back to ${view.label}</a>`
+    : '<a href="#training-dance" class="dance-back">&larr; Back to Dance</a>';
+  container.innerHTML = `
+    <p class="dance-back-row">${back}</p>
+    <h1 class="dance-view-title">${view.label}</h1>
+    <div class="dance-view"></div>`;
+  document.title = view.label + ' - Dance - Idol Academy';
   return App.dance.renderView[view.id](container.querySelector('.dance-view'), extra);
 });
 

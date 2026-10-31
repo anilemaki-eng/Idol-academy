@@ -80,16 +80,21 @@
     document.getElementById('main-nav').innerHTML =
       navItems(App.sections, section.path, path);
 
-    // Page area: section heading, sub-section nav (if any), sub-page heading
-    let html = `<h1>${section.label}</h1>`;
-    if (section.children) {
-      html +=
-        `<nav aria-label="${section.label} sections">` +
-        `<ul class="nav-list sub-nav">${navItems(section.children, page.path, path)}</ul>` +
-        `</nav>`;
-    }
-    if (isSubPage) {
-      html += `<h2>${page.label}</h2>`;
+    // Page area: section heading, sub-section nav (if any), sub-page heading.
+    // Pages marked detailOwnPage in routes.js (e.g. Dance's Learn Choreo)
+    // show their longer addresses as a page of their own, without these.
+    let html = '';
+    if (!(route.detail && page.detailOwnPage)) {
+      html += `<h1>${section.label}</h1>`;
+      if (section.children) {
+        html +=
+          `<nav aria-label="${section.label} sections">` +
+          `<ul class="nav-list sub-nav">${navItems(section.children, page.path, path)}</ul>` +
+          `</nav>`;
+      }
+      if (isSubPage) {
+        html += `<h2>${page.label}</h2>`;
+      }
     }
     html += '<div id="page-content"></div>';
     document.getElementById('app').innerHTML = html;

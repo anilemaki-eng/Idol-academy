@@ -20,7 +20,9 @@ App.sections = [
     path: '/training',
     label: 'Training',
     children: [
-      { path: '/training/dance', label: 'Dance', hasDetail: true },
+      // detailOwnPage: Warming Up, Learn Choreo and Compare open as pages of
+      // their own, without the Training / Dance headings on top
+      { path: '/training/dance', label: 'Dance', hasDetail: true, detailOwnPage: true },
       { path: '/training/vocals', label: 'Vocals' },
       { path: '/training/rap', label: 'Rap' },
       { path: '/training/korean', label: 'Korean' }

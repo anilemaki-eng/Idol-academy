@@ -104,3 +104,12 @@
 .videos-form button {
   padding: 8px 20px;
 }
+
+/* Warming Up, Learn Choreo and Compare: pages of their own */
+.dance-back-row {
+  margin: 12px 0 0;
+}
+
+.dance-view-title {
+  margin: 4px 0 12px;
+}
