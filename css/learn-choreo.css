@@ -74,9 +74,15 @@
   gap: 8px;
 }
 
-.lc-learn-buttons {
+/* Learning: Previous | Play/Pause | Next, each always in its own place */
+.lc-ui .lc-learn-buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 8px;
 }
+
+#lc-prev { grid-column: 1; }
+#lc-learn-play { grid-column: 2; }
+#lc-next { grid-column: 3; }
 
 /* The step's main button stands out */
 .lc-ui .lc-main {
@@ -124,5 +130,42 @@
 }
 
 .lc-redo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 24px 0 0;
+}
+
+/* Fix sections */
+.lc-edit {
+  margin-top: 16px;
+}
+
+.lc-edit h4 {
+  margin: 0 0 4px;
+}
+
+.lc-edit-help {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+}
+
+.lc-edit-list {
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lc-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.lc-edit-label {
+  flex: 1 1 100%;
+  font-variant-numeric: tabular-nums;
 }

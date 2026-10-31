@@ -6,8 +6,11 @@
 //      starts, then Play both / Pause both / Restart both
 //
 // PRIVACY: your own video is opened directly on this device (a local
-// "object URL"). It is never uploaded, saved by the app, or sent anywhere.
-// When you leave the page, the app lets go of it.
+// "object URL") and kept only in this browser's on-device storage
+// (local-videos.js), so you don't have to choose it again. It is never
+// uploaded or sent anywhere. "Remove my video" deletes the app's copy.
+// Where both videos were lined up (start points) is saved under
+// 'dance-compare/<video id>'.
 App.dance = App.dance || {};
 App.dance.renderView = App.dance.renderView || {};
 
@@ -38,7 +41,9 @@ App.dance.renderCompare = function (container, videoKey) {
           <span class="cmp-pick-label">Choose my video</span>
           <input type="file" id="cmp-file" accept="video/*">
         </label>
-        <p class="cmp-private">Your video stays on this phone. It isn&rsquo;t uploaded or saved anywhere.</p>
+        <p class="cmp-private">Your video stays on this phone. The app keeps a copy on this
+          phone so you don&rsquo;t have to choose it again; it&rsquo;s never uploaded.</p>
+        <p class="cmp-kept" hidden></p>
       </div>
       <p class="cmp-my-error" role="alert" hidden></p>
 
@@ -62,6 +67,10 @@ App.dance.renderCompare = function (container, videoKey) {
         <p class="cmp-help">Line both videos up where the dance starts (use each video&rsquo;s
           own time bar), then tap Play both. Your video is muted so the music
           doesn&rsquo;t play twice; tap its speaker icon to hear it.</p>
+        <p class="cmp-remove-row">
+          <button type="button" id="cmp-remove">Remove my video from the app</button>
+          <span class="cmp-remove-note">(It stays in your phone&rsquo;s gallery.)</span>
+        </p>
       </div>
     </div>`;
 
@@ -80,6 +89,10 @@ App.dance.renderCompare = function (container, videoKey) {
   const playButton = q('#cmp-play');
   const pauseButton = q('#cmp-pause');
   const restartButton = q('#cmp-restart');
+  const removeButton = q('#cmp-remove');
+  const kept = q('.cmp-kept');
+  const pointsPath = 'dance-compare/' + videoKey;
+  let lineUpPending = false; // move both videos to the saved start points once they're ready
 
   // Shows a problem with the practice video, with a way to watch it on YouTube
   function showFatal(text) {
@@ -116,22 +129,60 @@ App.dance.renderCompare = function (container, videoKey) {
     }
   }
 
+  function showMine(blob) {
+    myError.hidden = true;
+    forgetMyVideo();
+    myUrl = URL.createObjectURL(blob); // a local address; the file is not uploaded
+    myVideo.src = myUrl;
+    updateUI();
+  }
+
+  function saveStartPoints() {
+    App.storage.save(pointsPath, startPoints).catch(function () {});
+  }
+
+  // Both videos ready: put them where you last lined them up
+  function lineUp() {
+    if (!lineUpPending || !startPoints || !ready || !myUrl || myVideo.readyState < 1) return;
+    lineUpPending = false;
+    player.seekTo(startPoints.pro, true);
+    player.pauseVideo();
+    myVideo.currentTime = startPoints.mine;
+  }
+
   fileInput.addEventListener('change', function () {
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
-    myError.hidden = true;
-    forgetMyVideo();
     startPoints = null;
-    myUrl = URL.createObjectURL(file); // a local address; the file is not uploaded
-    myVideo.src = myUrl;
-    updateUI();
+    saveStartPoints();
+    showMine(file);
     // Show both videos and the buttons together
     q('.cmp-videos').scrollIntoView({ block: 'start' });
+    // Keep a copy on this phone for next time
+    kept.hidden = true;
+    App.localVideos.save(videoKey, file).catch(function () {
+      kept.textContent = "There isn't enough space to keep this video for next time, " +
+        "so you'll need to choose it again then.";
+      kept.hidden = false;
+    });
   });
+
+  removeButton.addEventListener('click', function () {
+    App.localVideos.remove(videoKey).catch(function () {});
+    forgetMyVideo();
+    startPoints = null;
+    saveStartPoints();
+    kept.hidden = true;
+    fileInput.value = '';
+    updateUI();
+  });
+
+  myVideo.addEventListener('loadedmetadata', lineUp);
 
   myVideo.addEventListener('error', function () {
     if (!myUrl) return;
     forgetMyVideo();
+    App.localVideos.remove(videoKey).catch(function () {});
     myError.textContent = "This video can't be played here. Try a different video, or one recorded with your phone's camera.";
     myError.hidden = false;
     updateUI();
@@ -141,6 +192,7 @@ App.dance.renderCompare = function (container, videoKey) {
 
   playButton.addEventListener('click', function () {
     startPoints = { pro: player.getCurrentTime(), mine: myVideo.currentTime };
+    saveStartPoints();
     player.playVideo();
     const playing = myVideo.play();
     if (playing && playing.catch) playing.catch(function () {});
@@ -176,6 +228,21 @@ App.dance.renderCompare = function (container, videoKey) {
       return;
     }
 
+    // Your video and start points from last time (kept on this phone)
+    let gotPoints = false;
+    cleanups.push(App.storage.watch(pointsPath, function (data) {
+      if (gotPoints) return;
+      gotPoints = true;
+      if (data && typeof data.pro === 'number' && typeof data.mine === 'number') {
+        startPoints = data;
+      }
+      App.localVideos.load(videoKey).then(function (record) {
+        if (destroyed || !record || myUrl) return;
+        lineUpPending = !!startPoints;
+        showMine(record.blob);
+      }).catch(function () {});
+    }, function () {}));
+
     App.youtube.loadApi().then(
       function (YT) {
         if (destroyed) return;
@@ -189,6 +256,7 @@ App.dance.renderCompare = function (container, videoKey) {
               if (destroyed) return;
               ready = true;
               updateUI();
+              lineUp();
             },
             onError: function (event) {
               showFatal(App.youtube.errorMessage(event.data));

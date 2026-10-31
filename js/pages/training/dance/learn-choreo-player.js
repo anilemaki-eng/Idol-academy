@@ -9,9 +9,13 @@
 // 2. Learn: Section 1 repeats on its own, starting at 0.50x. Slower / Faster
 //    change the speed by 0.10x while it repeats. "Next section" appears only
 //    once the speed is back to 1.00x; the next section starts again at 0.50x.
+//    Previous section goes back; sections you've already reached can be
+//    revisited freely. "Fix sections" moves, splits or joins single sections.
 //
-// Sections are saved under 'dance-choreo/<video id>' as
-// { sections: [{ id, start, end }] } (times in seconds).
+// Saved under 'dance-choreo/<video id>' as
+// { sections: [{ id, start, end }], current, furthest, speed }
+// (times in seconds; current = the section you were on, furthest = the
+// furthest section you've reached, speed = your speed when you left).
 App.dance = App.dance || {};
 
 App.dance.renderLearnPlayer = function (container, videoKey) {
@@ -31,6 +35,9 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   let phase = null;          // 'mark' or 'learn'
   let marks = [];            // while marking: the start time of each section
   let current = 0;           // while learning: which section (0 = Section 1)
+  let furthest = 0;          // the furthest section you've reached
+  let savedState = null;     // what was saved last time (to carry on where you stopped)
+  let editOpen = false;      // the "Fix sections" panel is showing
   let seekTarget = null;     // time we just jumped to (waiting for the player to get there)
   let seekDeadline = 0;
   let desiredSpeed = MARK_SPEED; // the speed you chose
@@ -61,15 +68,28 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
           </div>
           <p class="lc-speed-note" hidden></p>
           <div class="lc-learn-buttons">
+            <button type="button" id="lc-prev" hidden>&larr; Previous</button>
             <button type="button" id="lc-learn-play">Pause</button>
-            <button type="button" id="lc-next" class="lc-main" hidden>Next section</button>
+            <button type="button" id="lc-next" class="lc-main" hidden>Next &rarr;</button>
           </div>
           <p class="lc-next-hint"></p>
         </div>
 
         <p class="lc-help"></p>
         <p class="lc-message" aria-live="polite"></p>
-        <p class="lc-redo-row"><button type="button" id="lc-redo"></button></p>
+        <p class="lc-redo-row">
+          <button type="button" id="lc-edit" hidden>Fix sections</button>
+          <button type="button" id="lc-redo"></button>
+        </p>
+        <div class="lc-edit" hidden>
+          <h4>Fix sections</h4>
+          <p class="lc-edit-help">Move where a section starts by 0.2 seconds, join a
+            section with the one before it, or split the section you&rsquo;re on at
+            the moment the video is showing.</p>
+          <button type="button" id="lc-split">Split this section here</button>
+          <ol class="lc-edit-list"></ol>
+          <button type="button" id="lc-edit-done">Done</button>
+        </div>
       </div>
     </div>`;
 
@@ -91,6 +111,12 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   const speedNote = q('.lc-speed-note');
   const learnPlayButton = q('#lc-learn-play');
   const nextButton = q('#lc-next');
+  const prevButton = q('#lc-prev');
+  const editButton = q('#lc-edit');
+  const editPanel = q('.lc-edit');
+  const editList = q('.lc-edit-list');
+  const splitButton = q('#lc-split');
+  const editDoneButton = q('#lc-edit-done');
   const nextHint = q('.lc-next-hint');
   const message = q('.lc-message');
   const redoButton = q('#lc-redo');
@@ -169,6 +195,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     desiredSpeed = round(target, 2);
     appliedRate = closestRate(desiredSpeed);
     player.setPlaybackRate(appliedRate);
+    if (phase === 'learn') saveState();
     updateUI();
   }
 
@@ -193,6 +220,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   function startMarking() {
     phase = 'mark';
     marks = [0];
+    editOpen = false;
     say('');
     setSpeed(MARK_SPEED);
     jumpTo(0);
@@ -223,7 +251,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
       return { id: newId(), start: start, end: i < marks.length - 1 ? marks[i + 1] : end };
     }).filter(function (s) { return s.end > s.start; });
     marks = [];
-    saveSections();
+    furthest = 0;
     startLearning(0);
     say('Sections saved. Now learn them one by one.');
   }
@@ -233,10 +261,83 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   function startLearning(index) {
     phase = 'learn';
     current = index;
-    setSpeed(LEARN_START_SPEED);
+    furthest = Math.max(furthest, index);
+    setSpeed(LEARN_START_SPEED); // also saves where you are
     jumpTo(sections[current].start);
     player.playVideo();
     updateUI();
+  }
+
+  // ----- Fixing single sections -----
+  // Sections follow each other, so where one starts is where the one
+  // before it ends.
+
+  // Move where section i starts (i >= 1) by delta seconds
+  function moveStart(i, delta) {
+    const time = round(sections[i].start + delta, 1);
+    if (time < sections[i - 1].start + 0.5 || time > sections[i].end - 0.5) {
+      say('Sections must be at least half a second long.');
+      return;
+    }
+    sections[i - 1].end = time;
+    sections[i].start = time;
+    say('');
+    saveState();
+    updateUI();
+  }
+
+  // Join section i (i >= 1) with the one before it
+  function joinWithPrevious(i) {
+    sections[i - 1].end = sections[i].end;
+    sections.splice(i, 1);
+    if (current >= i) current--;
+    if (furthest >= i) furthest--;
+    say('Sections ' + i + ' and ' + (i + 1) + ' are now one section.');
+    saveState();
+    updateUI();
+  }
+
+  // Split the section you're on at the moment the video is showing
+  function splitCurrent() {
+    const section = sections[current];
+    const time = round(player.getCurrentTime(), 1);
+    if (time < section.start + 0.5 || time > section.end - 0.5) {
+      say('Pause the video inside Section ' + (current + 1) +
+        ' (not right at its start or end), then tap Split.');
+      return;
+    }
+    sections.splice(current + 1, 0, { id: newId(), start: time, end: section.end });
+    section.end = time;
+    if (furthest > current) furthest++;
+    say('Section ' + (current + 1) + ' is now two sections, split at ' + formatTime(time) + '.');
+    saveState();
+    updateUI();
+  }
+
+  function drawEditList() {
+    editList.innerHTML = '';
+    sections.forEach(function (section, i) {
+      if (i === 0) return; // Section 1 always starts at the beginning
+      const row = document.createElement('li');
+      row.className = 'lc-edit-row';
+      const label = document.createElement('span');
+      label.className = 'lc-edit-label';
+      label.textContent = 'Section ' + (i + 1) + ' starts at ' + formatTime(section.start);
+      const buttons = [
+        ['\u2212 0.2s', 'Section ' + (i + 1) + ' starts earlier', function () { moveStart(i, -0.2); }],
+        ['+ 0.2s', 'Section ' + (i + 1) + ' starts later', function () { moveStart(i, 0.2); }],
+        ['Join', 'Join section ' + (i + 1) + ' with section ' + i, function () { joinWithPrevious(i); }]
+      ].map(function (b) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = b[0];
+        button.setAttribute('aria-label', b[1]);
+        button.addEventListener('click', b[2]);
+        return button;
+      });
+      row.append.apply(row, [label].concat(buttons));
+      editList.appendChild(row);
+    });
   }
 
   // Runs 10 times a second: while learning, the section repeats on its own
@@ -258,8 +359,12 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
 
   // ----- Saving sections -----
 
-  function saveSections() {
-    App.storage.save(sectionsPath, sections.length ? { sections: sections } : null)
+  // Saves the sections and where you are (section, furthest section, speed)
+  function saveState() {
+    const data = sections.length
+      ? { sections: sections, current: current, furthest: furthest, speed: desiredSpeed }
+      : null;
+    App.storage.save(sectionsPath, data)
       .catch(function () { say(App.storage.saveFailedMessage); });
   }
 
@@ -269,6 +374,9 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     const playLabel = isPlaying() ? 'Pause' : 'Play';
     markControls.hidden = phase !== 'mark';
     learnControls.hidden = phase !== 'learn';
+    editButton.hidden = phase !== 'learn' || editOpen;
+    editPanel.hidden = phase !== 'learn' || !editOpen;
+    if (!editPanel.hidden) drawEditList();
 
     if (phase === 'mark') {
       status.textContent = 'Marking sections · Section ' + marks.length +
@@ -307,14 +415,16 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
       }
       speedNote.hidden = !speedNote.textContent;
 
-      // Next section only at full speed
-      nextButton.hidden = isLast || !atFullSpeed;
+      // Next section only at full speed (or if you've already been further)
+      const reachedBefore = current < furthest;
+      prevButton.hidden = current === 0;
+      nextButton.hidden = isLast || !(atFullSpeed || reachedBefore);
       if (isLast) {
         nextHint.textContent = atFullSpeed
           ? 'This is the last section, and you’re at full speed.'
           : 'This is the last section. Reach ' + formatSpeed(MAX_SPEED) + ' to finish it.';
       } else {
-        nextHint.textContent = atFullSpeed
+        nextHint.textContent = atFullSpeed || reachedBefore
           ? ''
           : 'Reach ' + formatSpeed(MAX_SPEED) + ' to unlock the next section.';
       }
@@ -354,6 +464,25 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     }
   });
 
+  prevButton.addEventListener('click', function () {
+    if (current > 0) {
+      say('');
+      startLearning(current - 1);
+    }
+  });
+
+  editButton.addEventListener('click', function () {
+    editOpen = true;
+    say('');
+    updateUI();
+  });
+  editDoneButton.addEventListener('click', function () {
+    editOpen = false;
+    say('');
+    updateUI();
+  });
+  splitButton.addEventListener('click', splitCurrent);
+
   redoButton.addEventListener('click', function () {
     startMarking();
   });
@@ -365,12 +494,19 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   function begin() {
     if (!ready || !sectionsLoaded || phase !== null) return;
     if (sections.length) {
+      // Carry on where you stopped last time
+      const last = sections.length - 1;
+      const saved = savedState || {};
+      current = Math.min(Math.max(0, Math.floor(Number(saved.current) || 0)), last);
+      furthest = Math.min(Math.max(current, Math.floor(Number(saved.furthest) || 0)), last);
+      const speed = Number(saved.speed);
       phase = 'learn';
-      current = 0;
-      setSpeed(LEARN_START_SPEED);
-      jumpTo(sections[0].start);
+      setSpeed(speed >= MIN_SPEED && speed <= MAX_SPEED ? speed : LEARN_START_SPEED);
+      jumpTo(sections[current].start);
       updateUI();
-      say('Tap Play to start learning Section 1.');
+      say(current > 0 || speed > LEARN_START_SPEED
+        ? 'Welcome back! Tap Play to carry on with Section ' + (current + 1) + '.'
+        : 'Tap Play to start learning Section 1.');
     } else {
       startMarking();
     }
@@ -403,6 +539,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
         sections = data && Array.isArray(data.sections)
           ? data.sections.slice().sort(function (a, b) { return a.start - b.start; })
           : [];
+        savedState = data;
         sectionsLoaded = true;
         begin();
       },

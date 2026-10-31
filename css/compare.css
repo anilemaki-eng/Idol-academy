@@ -129,3 +129,23 @@
   font: inherit;
   font-size: 1rem;
 }
+
+.cmp-kept {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+}
+
+.cmp-remove-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+}
+
+.cmp-remove-row button {
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+}
