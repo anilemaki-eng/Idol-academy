@@ -198,3 +198,9 @@
   flex: 1 1 100%;
   font-variant-numeric: tabular-nums;
 }
+
+/* Practice the whole dance / Back to section */
+.lc-ui .lc-whole {
+  width: 100%;
+  margin-top: 8px;
+}

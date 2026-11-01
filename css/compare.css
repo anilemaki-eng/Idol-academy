@@ -149,3 +149,86 @@
   padding: 6px 12px;
   font: inherit;
 }
+
+/* "You" with Sound and Flip beside it */
+.cmp-mine-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cmp-mine-head figcaption {
+  flex: 1;
+  margin: 0;
+}
+
+.cmp-mine-head button,
+.cmp-seek button {
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+}
+
+.cmp-mine-head button[aria-pressed="true"] {
+  font-weight: bold;
+  outline: 2px solid #111;
+  outline-offset: -2px;
+}
+
+/* Your video shown like a mirror */
+#cmp-my-video.flipped {
+  transform: scaleX(-1);
+}
+
+/* ◀ slider ▶ time, under your video */
+.cmp-seek {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cmp-seek input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmp-time-label {
+  flex: none;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Slower | Speed | Faster, for both videos */
+.cmp-speed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cmp-speed button {
+  min-height: 48px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.cmp-speed-value {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cmp-speed-value strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.cmp-speed-note {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+}

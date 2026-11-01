@@ -11,12 +11,15 @@
 //    once the speed is back to 1.00x; the next section starts again at 0.50x.
 //    Previous section goes back; sections you've already reached can be
 //    revisited freely. "Fix sections" moves, splits or joins single sections.
+//    Once every section has been reached at 1.00x, "Practice the whole dance"
+//    repeats the whole choreography, with the same speed buttons.
 //
 // Saved under 'dance-choreo/<video id>' as
-// { sections: [{ id, start, end }], current, furthest, speed, mirror }
+// { sections: [{ id, start, end }], current, furthest, speed, mirror, finished }
 // (times in seconds; current = the section you were on, furthest = the
 // furthest section you've reached, speed = your speed when you left,
-// mirror = whether the video is shown flipped like a mirror).
+// mirror = whether the video is shown flipped like a mirror,
+// finished = every section has been learned up to 1.00x).
 App.dance = App.dance || {};
 
 App.dance.renderLearnPlayer = function (container, videoKey) {
@@ -40,6 +43,8 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   let savedState = null;     // what was saved last time (to carry on where you stopped)
   let editOpen = false;      // the "Fix sections" panel is showing
   let mirrored = false;      // video shown flipped like a mirror
+  let finished = false;      // reached 1.00x on the last section: whole-dance practice is open
+  let whole = false;         // practising the whole dance instead of one section
   let seekTarget = null;     // time we just jumped to (waiting for the player to get there)
   let seekDeadline = 0;
   let desiredSpeed = MARK_SPEED; // the speed you chose
@@ -78,6 +83,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
             <button type="button" id="lc-next" class="lc-main" hidden>Next &rarr;</button>
           </div>
           <p class="lc-next-hint"></p>
+          <button type="button" id="lc-whole" class="lc-whole lc-main" hidden></button>
         </div>
 
         <p class="lc-help"></p>
@@ -123,6 +129,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   const splitButton = q('#lc-split');
   const editDoneButton = q('#lc-edit-done');
   const nextHint = q('.lc-next-hint');
+  const wholeButton = q('#lc-whole');
   const message = q('.lc-message');
   const redoButton = q('#lc-redo');
   const mirrorButton = q('#lc-mirror');
@@ -213,7 +220,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     desiredSpeed = round(target, 2);
     appliedRate = closestRate(desiredSpeed);
     player.setPlaybackRate(appliedRate);
-    if (phase === 'learn') saveState();
+    if (phase === 'learn' && !whole) saveState();
     updateUI();
   }
 
@@ -270,6 +277,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     }).filter(function (s) { return s.end > s.start; });
     marks = [];
     furthest = 0;
+    finished = false;
     startLearning(0);
     say('Sections saved. Now learn them one by one.');
   }
@@ -278,11 +286,29 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
 
   function startLearning(index) {
     phase = 'learn';
+    whole = false;
     current = index;
     furthest = Math.max(furthest, index);
     setSpeed(LEARN_START_SPEED); // also saves where you are
     jumpTo(sections[current].start);
     player.playVideo();
+    updateUI();
+  }
+
+  // What repeats: the current section, or the whole dance
+  function loopRange() {
+    return whole
+      ? { start: sections[0].start, end: sections[sections.length - 1].end }
+      : sections[current];
+  }
+
+  function startWholeDance() {
+    whole = true;
+    editOpen = false;
+    setSpeed(LEARN_START_SPEED);
+    jumpTo(loopRange().start);
+    player.playVideo();
+    say('');
     updateUI();
   }
 
@@ -369,9 +395,9 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
       return;
     }
 
-    const section = sections[current];
-    if (isPlaying() && (time >= section.end || time < section.start - 0.5)) {
-      jumpTo(section.start);
+    const range = loopRange();
+    if (isPlaying() && (time >= range.end || time < range.start - 0.5)) {
+      jumpTo(range.start);
     }
   }
 
@@ -380,7 +406,8 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   // Saves the sections and where you are (section, furthest section, speed)
   function saveState() {
     const data = sections.length
-      ? { sections: sections, current: current, furthest: furthest, speed: desiredSpeed, mirror: mirrored }
+      ? { sections: sections, current: current, furthest: furthest, speed: desiredSpeed,
+          mirror: mirrored, finished: finished }
       : null;
     App.storage.save(sectionsPath, data)
       .catch(function () { say(App.storage.saveFailedMessage); });
@@ -392,8 +419,8 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
     const playLabel = isPlaying() ? 'Pause' : 'Play';
     markControls.hidden = phase !== 'mark';
     learnControls.hidden = phase !== 'learn';
-    editButton.hidden = phase !== 'learn' || editOpen;
-    editPanel.hidden = phase !== 'learn' || !editOpen;
+    editButton.hidden = phase !== 'learn' || editOpen || whole;
+    editPanel.hidden = phase !== 'learn' || !editOpen || whole;
     if (!editPanel.hidden) drawEditList();
 
     if (phase === 'mark') {
@@ -412,10 +439,28 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
       const isLast = current >= sections.length - 1;
       const atFullSpeed = Math.abs(appliedRate - MAX_SPEED) < 1e-6;
 
-      status.textContent = 'Section ' + (current + 1) + ' of ' + sections.length +
-        ' (' + formatTime(section.start) + '–' + formatTime(section.end) + ') · repeating';
-      help.textContent = 'Step 2: learn the section. It repeats on its own. ' +
-        'Go faster when you’re ready.';
+      // Learned the last section at full speed: the whole dance opens up
+      if (!whole && isLast && atFullSpeed && !finished) {
+        finished = true;
+        saveState();
+      }
+
+      if (whole) {
+        const range = loopRange();
+        status.textContent = 'Whole dance (' + formatTime(range.start) + '–' +
+          formatTime(range.end) + ') · repeating';
+        help.textContent = 'Practise the whole choreography. It repeats on its own. ' +
+          'Go faster when you’re ready.';
+      } else {
+        status.textContent = 'Section ' + (current + 1) + ' of ' + sections.length +
+          ' (' + formatTime(section.start) + '–' + formatTime(section.end) + ') · repeating';
+        help.textContent = 'Step 2: learn the section. It repeats on its own. ' +
+          'Go faster when you’re ready.';
+      }
+      wholeButton.hidden = !finished;
+      wholeButton.textContent = whole
+        ? '\u2190 Back to Section ' + (current + 1)
+        : 'Practice the whole dance';
       learnPlayButton.textContent = playLabel;
       learnPlayButton.disabled = !ready;
 
@@ -435,12 +480,14 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
 
       // Next section only at full speed (or if you've already been further)
       const reachedBefore = current < furthest;
-      prevButton.hidden = current === 0;
-      nextButton.hidden = isLast || !(atFullSpeed || reachedBefore);
-      if (isLast) {
+      prevButton.hidden = whole || current === 0;
+      nextButton.hidden = whole || isLast || !(atFullSpeed || reachedBefore);
+      if (whole) {
+        nextHint.textContent = '';
+      } else if (isLast) {
         nextHint.textContent = atFullSpeed
-          ? 'This is the last section, and you’re at full speed.'
-          : 'This is the last section. Reach ' + formatSpeed(MAX_SPEED) + ' to finish it.';
+          ? 'You’ve learned every section! Now practise the whole dance.'
+          : finished ? '' : 'This is the last section. Reach ' + formatSpeed(MAX_SPEED) + ' to finish it.';
       } else {
         nextHint.textContent = atFullSpeed || reachedBefore
           ? ''
@@ -501,6 +548,15 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   });
   splitButton.addEventListener('click', splitCurrent);
 
+  wholeButton.addEventListener('click', function () {
+    if (whole) {
+      say('');
+      startLearning(current);
+    } else {
+      startWholeDance();
+    }
+  });
+
   redoButton.addEventListener('click', function () {
     startMarking();
   });
@@ -558,6 +614,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
           ? data.sections.slice().sort(function (a, b) { return a.start - b.start; })
           : [];
         savedState = data;
+        finished = !!(data && data.finished);
         mirrored = !!(data && data.mirror);
         showMirror();
         sectionsLoaded = true;
@@ -596,7 +653,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
                 }
                 if (phase === 'learn') {
                   // The last section reached the end of the video: repeat it
-                  jumpTo(sections[current].start);
+                  jumpTo(loopRange().start);
                   player.playVideo();
                 }
               }

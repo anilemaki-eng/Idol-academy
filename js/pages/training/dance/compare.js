@@ -4,6 +4,9 @@
 //   1. choose a video of yourself from your phone
 //   2. both videos are shown together; line each one up where the dance
 //      starts, then Play both / Pause both / Restart both
+//   - Slower / Faster change the speed of both videos together (0.50x-1.00x)
+//   - Flip shows your video mirrored (for phones that save selfie videos
+//     flipped); remembered under 'dance-compare-flip/<video id>'
 //
 // PRIVACY: your own video is opened directly on this device (a local
 // "object URL") and kept only in this browser's on-device storage
@@ -53,8 +56,19 @@ App.dance.renderCompare = function (container, videoKey) {
           <div class="cmp-pro"><div id="cmp-player"></div></div>
         </figure>
         <figure class="cmp-video cmp-mine" hidden>
-          <figcaption>You</figcaption>
-          <video id="cmp-my-video" controls playsinline muted preload="metadata"></video>
+          <div class="cmp-mine-head">
+            <figcaption>You</figcaption>
+            <button type="button" id="cmp-sound" aria-pressed="false">Sound: off</button>
+            <button type="button" id="cmp-flip" aria-pressed="false">&#8644; Flip</button>
+          </div>
+          <video id="cmp-my-video" playsinline muted preload="metadata"></video>
+          <div class="cmp-seek">
+            <button type="button" id="cmp-back" aria-label="Your video: back 0.2 seconds">&#9664;</button>
+            <input type="range" id="cmp-time" min="0" max="0" step="0.1" value="0"
+              aria-label="Position in your video">
+            <button type="button" id="cmp-fwd" aria-label="Your video: forward 0.2 seconds">&#9654;</button>
+            <span class="cmp-time-label">0:00.0</span>
+          </div>
         </figure>
       </div>
 
@@ -64,9 +78,15 @@ App.dance.renderCompare = function (container, videoKey) {
           <button type="button" id="cmp-pause">Pause both</button>
           <button type="button" id="cmp-restart" disabled>Restart both</button>
         </div>
-        <p class="cmp-help">Line both videos up where the dance starts (use each video&rsquo;s
-          own time bar), then tap Play both. Your video is muted so the music
-          doesn&rsquo;t play twice; tap its speaker icon to hear it.</p>
+        <div class="cmp-speed">
+          <button type="button" id="cmp-slower">&minus; Slower</button>
+          <p class="cmp-speed-value">Speed <strong id="cmp-speed">1.00&times;</strong></p>
+          <button type="button" id="cmp-faster">Faster +</button>
+        </div>
+        <p class="cmp-speed-note" hidden></p>
+        <p class="cmp-help">Line both videos up where the dance starts (the practice video&rsquo;s
+          time bar, and the slider under your video), then tap Play both. Your video&rsquo;s
+          sound is off so the music doesn&rsquo;t play twice. The speed changes both videos.</p>
         <p class="cmp-remove-row">
           <button type="button" id="cmp-remove">Remove my video from the app</button>
           <span class="cmp-remove-note">(It stays in your phone&rsquo;s gallery.)</span>
@@ -90,6 +110,22 @@ App.dance.renderCompare = function (container, videoKey) {
   const pauseButton = q('#cmp-pause');
   const restartButton = q('#cmp-restart');
   const removeButton = q('#cmp-remove');
+  const soundButton = q('#cmp-sound');
+  const flipButton = q('#cmp-flip');
+  const timeSlider = q('#cmp-time');
+  const timeLabel = q('.cmp-time-label');
+  const slowerButton = q('#cmp-slower');
+  const fasterButton = q('#cmp-faster');
+  const speedValue = q('#cmp-speed');
+  const speedNote = q('.cmp-speed-note');
+  const flipPath = 'dance-compare-flip/' + videoKey;
+  const MIN_SPEED = 0.5;
+  const MAX_SPEED = 1;
+  const SPEED_STEP = 0.1;
+  let desiredSpeed = MAX_SPEED; // the speed you chose
+  let appliedRate = 1;          // the speed YouTube is playing (your video matches it)
+  let flipped = false;
+  let dragging = false;         // moving the slider right now
   const kept = q('.cmp-kept');
   const pointsPath = 'dance-compare/' + videoKey;
   let lineUpPending = false; // move both videos to the saved start points once they're ready
@@ -116,7 +152,128 @@ App.dance.renderCompare = function (container, videoKey) {
     pickLabel.textContent = haveMine ? 'Choose a different video' : 'Choose my video';
     controls.hidden = !haveMine || !ready;
     restartButton.disabled = !startPoints;
+    soundButton.textContent = myVideo.muted ? 'Sound: off' : 'Sound: on';
+    soundButton.setAttribute('aria-pressed', String(!myVideo.muted));
+    flipButton.setAttribute('aria-pressed', String(flipped));
+    myVideo.classList.toggle('flipped', flipped);
+    if (ready) {
+      const onlyNormal = availableRates().length === 1;
+      speedValue.textContent = appliedRate.toFixed(2) + '\u00d7';
+      slowerButton.disabled = onlyNormal || speedStep(-1) === null;
+      fasterButton.disabled = onlyNormal || speedStep(1) === null;
+      speedNote.textContent = onlyNormal
+        ? 'YouTube only plays this video at normal speed here.'
+        : Math.abs(appliedRate - desiredSpeed) > 1e-6
+          ? "YouTube can't play this video at " + desiredSpeed.toFixed(2) +
+            '\u00d7, so both use the closest speed it allows.'
+          : '';
+      speedNote.hidden = !speedNote.textContent;
+    }
   }
+
+  // ----- Speed (both videos together) -----
+
+  function round(value, decimals) {
+    const factor = Math.pow(10, decimals);
+    return Math.round(value * factor) / factor;
+  }
+
+  function availableRates() {
+    const rates = player.getAvailablePlaybackRates();
+    return rates && rates.length ? rates : [1];
+  }
+
+  // The allowed speed closest to the one you want (the slower one on a tie)
+  function closestRate(target) {
+    return availableRates().reduce(function (best, rate) {
+      return Math.abs(rate - target) < Math.abs(best - target) - 1e-9 ? rate : best;
+    });
+  }
+
+  // Where one tap of Faster (+1) or Slower (-1) goes, or null if nowhere:
+  // 0.10x steps between 0.50x and 1.00x, skipping speeds YouTube rounds away
+  function speedStep(direction) {
+    let target = desiredSpeed;
+    for (;;) {
+      let next = round(target + direction * SPEED_STEP, 2);
+      if (direction > 0 && next > MAX_SPEED && target < MAX_SPEED) next = MAX_SPEED;
+      if (direction < 0 && next < MIN_SPEED && target > MIN_SPEED) next = MIN_SPEED;
+      if (next > MAX_SPEED + 1e-9 || next < MIN_SPEED - 1e-9) return null;
+      target = next;
+      if (closestRate(target) !== appliedRate) return target;
+    }
+  }
+
+  function setSpeed(target) {
+    desiredSpeed = round(target, 2);
+    appliedRate = closestRate(desiredSpeed);
+    player.setPlaybackRate(appliedRate);
+    myVideo.playbackRate = appliedRate; // your video always matches the practice video
+    updateUI();
+  }
+
+  slowerButton.addEventListener('click', function () {
+    const target = speedStep(-1);
+    if (target !== null) setSpeed(target);
+  });
+  fasterButton.addEventListener('click', function () {
+    const target = speedStep(1);
+    if (target !== null) setSpeed(target);
+  });
+
+  // ----- Your video's own controls -----
+
+  // 65.4 -> '1:05.4'
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const rest = (seconds - minutes * 60).toFixed(1);
+    return minutes + ':' + (rest < 10 ? '0' : '') + rest;
+  }
+
+  function showTime() {
+    const duration = isFinite(myVideo.duration) ? myVideo.duration : 0;
+    timeSlider.max = String(duration);
+    if (!dragging) timeSlider.value = String(myVideo.currentTime);
+    timeLabel.textContent = formatTime(myVideo.currentTime) + ' / ' + formatTime(duration);
+  }
+
+  function moveMine(seconds) {
+    const duration = isFinite(myVideo.duration) ? myVideo.duration : 0;
+    myVideo.currentTime = Math.min(Math.max(0, seconds), duration);
+    showTime();
+  }
+
+  myVideo.addEventListener('loadedmetadata', showTime);
+  myVideo.addEventListener('timeupdate', showTime);
+  myVideo.addEventListener('seeked', showTime);
+  timeSlider.addEventListener('input', function () {
+    dragging = true;
+    moveMine(Number(timeSlider.value));
+  });
+  timeSlider.addEventListener('change', function () { dragging = false; });
+  q('#cmp-back').addEventListener('click', function () { moveMine(myVideo.currentTime - 0.2); });
+  q('#cmp-fwd').addEventListener('click', function () { moveMine(myVideo.currentTime + 0.2); });
+
+  // Tap your video to play or pause it on its own
+  myVideo.addEventListener('click', function () {
+    if (myVideo.paused) {
+      const playing = myVideo.play();
+      if (playing && playing.catch) playing.catch(function () {});
+    } else {
+      myVideo.pause();
+    }
+  });
+
+  soundButton.addEventListener('click', function () {
+    myVideo.muted = !myVideo.muted;
+    updateUI();
+  });
+
+  flipButton.addEventListener('click', function () {
+    flipped = !flipped;
+    App.storage.save(flipPath, flipped ? { flip: true } : null).catch(function () {});
+    updateUI();
+  });
 
   // ----- Your own video (local only) -----
 
@@ -134,6 +291,7 @@ App.dance.renderCompare = function (container, videoKey) {
     forgetMyVideo();
     myUrl = URL.createObjectURL(blob); // a local address; the file is not uploaded
     myVideo.src = myUrl;
+    myVideo.playbackRate = appliedRate;
     updateUI();
   }
 
@@ -228,6 +386,15 @@ App.dance.renderCompare = function (container, videoKey) {
       return;
     }
 
+    // Flip setting from last time
+    let gotFlip = false;
+    cleanups.push(App.storage.watch(flipPath, function (data) {
+      if (gotFlip) return;
+      gotFlip = true;
+      flipped = !!(data && data.flip);
+      updateUI();
+    }, function () {}));
+
     // Your video and start points from last time (kept on this phone)
     let gotPoints = false;
     cleanups.push(App.storage.watch(pointsPath, function (data) {
@@ -240,6 +407,7 @@ App.dance.renderCompare = function (container, videoKey) {
         if (destroyed || !record || myUrl) return;
         lineUpPending = !!startPoints;
         showMine(record.blob);
+        q('.cmp-videos').scrollIntoView({ block: 'start' });
       }).catch(function () {});
     }, function () {}));
 
@@ -255,8 +423,15 @@ App.dance.renderCompare = function (container, videoKey) {
             onReady: function () {
               if (destroyed) return;
               ready = true;
-              updateUI();
+              setSpeed(MAX_SPEED);
               lineUp();
+            },
+            onPlaybackRateChange: function (event) {
+              // Changed with YouTube's own speed menu: your video follows
+              appliedRate = event.data;
+              if (Math.abs(closestRate(desiredSpeed) - appliedRate) > 1e-6) desiredSpeed = appliedRate;
+              myVideo.playbackRate = appliedRate;
+              updateUI();
             },
             onError: function (event) {
               showFatal(App.youtube.errorMessage(event.data));
