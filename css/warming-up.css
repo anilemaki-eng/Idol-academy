@@ -1,0 +1,105 @@
+/* Training > Dance > Warming Up */
+
+.wu-intro {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+}
+
+.wu-card {
+  max-width: 480px;
+}
+
+.wu-count {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The drawing of the stretch */
+.wu-picture {
+  max-width: 260px;
+  margin: 0 auto;
+}
+
+.wu-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.wu-figure line {
+  stroke-linecap: round;
+  fill: none;
+}
+
+.wu-floor {
+  stroke: #ccc;
+  stroke-width: 2;
+}
+
+.wu-near {
+  stroke: #111;
+  stroke-width: 7;
+}
+
+.wu-far {
+  stroke: #999;
+  stroke-width: 7;
+}
+
+.wu-head {
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 5;
+}
+
+.wu-name {
+  margin: 8px 0 4px;
+}
+
+.wu-steps {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.wu-steps li + li {
+  margin-top: 4px;
+}
+
+.wu-hold {
+  margin: 8px 0 0;
+  font-weight: bold;
+}
+
+.wu-done {
+  max-width: 480px;
+  padding: 24px 0;
+}
+
+/* ← Previous | Next → */
+/* Stays just above the bottom menu, so Next is always one tap away */
+.wu-buttons {
+  position: sticky;
+  bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 480px;
+  margin-top: 16px;
+  padding: 8px 0;
+  background: #fff;
+}
+
+.wu-buttons button {
+  min-height: 48px;
+  padding: 8px;
+  font: inherit;
+  font-size: 1rem;
+}
+
+#wu-prev { grid-column: 1; }
+#wu-next { grid-column: 2; }
+
+.wu-buttons .wu-main {
+  font-weight: bold;
+}
