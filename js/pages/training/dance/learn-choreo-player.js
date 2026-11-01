@@ -13,9 +13,10 @@
 //    revisited freely. "Fix sections" moves, splits or joins single sections.
 //
 // Saved under 'dance-choreo/<video id>' as
-// { sections: [{ id, start, end }], current, furthest, speed }
+// { sections: [{ id, start, end }], current, furthest, speed, mirror }
 // (times in seconds; current = the section you were on, furthest = the
-// furthest section you've reached, speed = your speed when you left).
+// furthest section you've reached, speed = your speed when you left,
+// mirror = whether the video is shown flipped like a mirror).
 App.dance = App.dance || {};
 
 App.dance.renderLearnPlayer = function (container, videoKey) {
@@ -38,6 +39,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   let furthest = 0;          // the furthest section you've reached
   let savedState = null;     // what was saved last time (to carry on where you stopped)
   let editOpen = false;      // the "Fix sections" panel is showing
+  let mirrored = false;      // video shown flipped like a mirror
   let seekTarget = null;     // time we just jumped to (waiting for the player to get there)
   let seekDeadline = 0;
   let desiredSpeed = MARK_SPEED; // the speed you chose
@@ -49,7 +51,10 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   container.innerHTML = `
     <p class="lc-note">Loading&hellip;</p>
     <div class="lc-area" hidden>
-      <h3 class="lc-title"></h3>
+      <div class="lc-title-row">
+        <h3 class="lc-title"></h3>
+        <button type="button" id="lc-mirror" aria-pressed="false">&#8644; Mirror</button>
+      </div>
       <p class="lc-error" role="alert" hidden></p>
       <div class="lc-ui">
         <div class="lc-video"><div id="lc-player"></div></div>
@@ -120,6 +125,19 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   const nextHint = q('.lc-next-hint');
   const message = q('.lc-message');
   const redoButton = q('#lc-redo');
+  const mirrorButton = q('#lc-mirror');
+  const videoBox = q('.lc-video');
+
+  // Mirror: flips the video left to right, so it moves like your reflection
+  function showMirror() {
+    videoBox.classList.toggle('mirrored', mirrored);
+    mirrorButton.setAttribute('aria-pressed', String(mirrored));
+  }
+  mirrorButton.addEventListener('click', function () {
+    mirrored = !mirrored;
+    showMirror();
+    if (sections.length) saveState();
+  });
 
   // ----- Small helpers -----
 
@@ -362,7 +380,7 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
   // Saves the sections and where you are (section, furthest section, speed)
   function saveState() {
     const data = sections.length
-      ? { sections: sections, current: current, furthest: furthest, speed: desiredSpeed }
+      ? { sections: sections, current: current, furthest: furthest, speed: desiredSpeed, mirror: mirrored }
       : null;
     App.storage.save(sectionsPath, data)
       .catch(function () { say(App.storage.saveFailedMessage); });
@@ -540,6 +558,8 @@ App.dance.renderLearnPlayer = function (container, videoKey) {
           ? data.sections.slice().sort(function (a, b) { return a.start - b.start; })
           : [];
         savedState = data;
+        mirrored = !!(data && data.mirror);
+        showMirror();
         sectionsLoaded = true;
         begin();
       },

@@ -22,9 +22,38 @@
   min-height: 100vh;
 }
 
-.lc-title {
+/* Song title with the Mirror button beside it */
+.lc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0 0 8px;
+}
+
+.lc-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   overflow-wrap: anywhere;
+}
+
+#lc-mirror {
+  flex: none;
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+}
+
+/* Pressed: the mirror is on */
+#lc-mirror[aria-pressed="true"] {
+  font-weight: bold;
+  outline: 2px solid #111;
+  outline-offset: -2px;
+}
+
+/* The video flipped left to right */
+.lc-video.mirrored iframe {
+  transform: scaleX(-1);
 }
 
 .lc-error {
