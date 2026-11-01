@@ -15,42 +15,20 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The drawing of the stretch */
+/* The drawing of the stretch: whole drawing visible, never too tall */
 .wu-picture {
-  max-width: 260px;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 38vh;
+  min-height: 200px;
+  max-height: 360px;
 }
 
-.wu-figure {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.wu-figure line {
-  stroke-linecap: round;
-  fill: none;
-}
-
-.wu-floor {
-  stroke: #ccc;
-  stroke-width: 2;
-}
-
-.wu-near {
-  stroke: #111;
-  stroke-width: 7;
-}
-
-.wu-far {
-  stroke: #999;
-  stroke-width: 7;
-}
-
-.wu-head {
-  fill: #fff;
-  stroke: #111;
-  stroke-width: 5;
+.wu-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .wu-name {
