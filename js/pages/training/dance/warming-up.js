@@ -1,6 +1,7 @@
 // Training > Dance > Warming Up
-// A warm-up routine shown one stretch at a time: a drawing, how to do it
-// and how long to do it. Next / Previous move between stretches.
+// A warm-up routine in two parts: "Get moving" (kind: 'move', light
+// movement that warms the body up) and then the stretches. Shown one at a
+// time: a drawing, how to do it and how long to do it. Next / Previous move between stretches.
 // Start runs the routine by itself: a short "Get ready" countdown, the hold
 // (seconds = per side; sides = 2 adds "Switch sides!" halfway), then the
 // next stretch. A beep marks each change and the screen is kept awake. The order
@@ -10,6 +11,113 @@ App.dance = App.dance || {};
 App.dance.renderView = App.dance.renderView || {};
 
 App.dance.warmUp = [
+  // ----- Part 1: Get moving -----
+  {
+    kind: 'move',
+    name: 'Ankle rolls',
+    image: 'ankle-rolls',
+    steps: [
+      'Stand tall and lift one heel, keeping your toes on the floor.',
+      'Roll the ankle in slow circles, then change direction.',
+      'Hold onto something if you need help with balance.'
+    ],
+    time: '15 seconds each foot',
+    seconds: 15,
+    sides: 2
+  },
+  {
+    kind: 'move',
+    name: 'Jog with heel kicks',
+    image: 'jog-heel-kicks',
+    steps: [
+      'Jog lightly on the spot.',
+      'Kick your heels up behind you toward your bottom.',
+      'Swing your arms and stay light on your feet.'
+    ],
+    time: '45 seconds',
+    seconds: 45,
+    sides: 1
+  },
+  {
+    kind: 'move',
+    name: 'Jumping jacks',
+    image: 'jumping-jacks',
+    steps: [
+      'Jump your feet out wide while your arms swing up over your head.',
+      'Jump back with feet together and arms down.',
+      'Land softly with bent knees.'
+    ],
+    time: '30 seconds',
+    seconds: 30,
+    sides: 1
+  },
+  {
+    kind: 'move',
+    name: 'Arm circles',
+    image: 'arm-circles',
+    steps: [
+      'Stretch your arms out to the sides at shoulder height.',
+      'Draw small circles, making them bigger and bigger.',
+      'Halfway through, circle the other way.'
+    ],
+    time: '30 seconds (15 forward, 15 back)',
+    seconds: 30,
+    sides: 1
+  },
+  {
+    kind: 'move',
+    name: 'Torso twists',
+    image: 'torso-twists',
+    steps: [
+      'Stand with your feet apart and fold your arms in front of your chest.',
+      'Twist your upper body from side to side.',
+      'Keep your hips facing forward.'
+    ],
+    time: '30 seconds',
+    seconds: 30,
+    sides: 1
+  },
+  {
+    kind: 'move',
+    name: 'Knee hugs',
+    image: 'knee-hugs',
+    steps: [
+      'Lift one knee and hug it to your chest for a moment.',
+      'Put it down and lift the other knee.',
+      'Keep switching legs and stand tall.'
+    ],
+    time: '30 seconds',
+    seconds: 30,
+    sides: 1
+  },
+  {
+    kind: 'move',
+    name: 'Leg swings',
+    image: 'leg-swings',
+    steps: [
+      'Stand on one leg (hold onto a wall if you need to).',
+      'Swing the other leg forward and back, keeping it straight.',
+      'Start small and let the swings get bigger.'
+    ],
+    time: '20 seconds each leg',
+    seconds: 20,
+    sides: 2
+  },
+  {
+    kind: 'move',
+    name: 'Side lunges',
+    image: 'side-lunges',
+    steps: [
+      'Stand with your feet very wide and your hands together in front of you.',
+      'Bend one knee and shift your weight over it, keeping the other leg straight.',
+      'Move slowly from side to side.'
+    ],
+    time: '30 seconds',
+    seconds: 30,
+    sides: 1
+  },
+
+  // ----- Part 2: Stretch -----
   {
     name: 'Neck side stretch',
     image: 'neck-side',
@@ -226,9 +334,9 @@ App.dance.renderView['warming-up'] = function (container) {
   }, 0);
 
   container.innerHTML = `
-    <p class="wu-intro">A gentle warm-up before you dance (about
-      ${Math.round(totalSeconds / 60)} minutes). Move slowly, breathe, and never
-      stretch into pain.</p>
+    <p class="wu-intro">Your warm-up before you dance (about
+      ${Math.round(totalSeconds / 60)} minutes): first get moving to warm up your body,
+      then stretch. Breathe, and never stretch into pain.</p>
     <div class="wu-card">
       <p class="wu-count"></p>
       <div class="wu-picture"></div>
@@ -365,7 +473,8 @@ App.dance.renderView['warming-up'] = function (container) {
     } else if (phase === 'switch') {
       label = 'Switch sides!';
     } else {
-      label = twoSides ? 'Hold · side ' + side + ' of 2' : 'Hold';
+      const action = move.kind === 'move' ? 'Move' : 'Hold';
+      label = twoSides ? action + ' · side ' + side + ' of 2' : action;
     }
     if (paused) label = 'Paused';
     timerLabel.textContent = label;
@@ -427,7 +536,8 @@ App.dance.renderView['warming-up'] = function (container) {
     doneBox.hidden = !done;
     if (!done) {
       const move = moves[index];
-      count.textContent = 'Stretch ' + (index + 1) + ' of ' + moves.length;
+      count.textContent = (move.kind === 'move' ? 'Get moving' : 'Stretch') + ' · ' +
+        (index + 1) + ' of ' + moves.length;
       picture.innerHTML = '';
       const img = document.createElement('img');
       img.src = 'images/warm-up/' + move.image + '.webp';
