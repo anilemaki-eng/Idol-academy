@@ -11,7 +11,7 @@ App.dance.renderView = App.dance.renderView || {}; // filled in by each view's f
 // The three buttons, in order. 'id' is the end of the view's address.
 // hasDetail: true lets the view's address carry an extra part (e.g. a video id).
 App.dance.views = [
-  { id: 'warming-up', label: 'Warming Up' },
+  { id: 'warming-up', label: 'Warm Up and Stretch' },
   { id: 'learn-choreo', label: 'Learn Choreo', hasDetail: true },
   { id: 'compare', label: 'Compare', hasDetail: true }
 ];
