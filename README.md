@@ -9,14 +9,18 @@ Open the app's website address (GitHub Pages). Everything you save (Schedule pla
 ## How it's organized
 
 - `index.html`: the page shell (header, navigation, content area) and the list of scripts.
-- `css/styles.css`: layout styles. `css/schedule.css`, `css/dance.css`, `css/learn-choreo.css`: styles for those pages.
+- `css/styles.css`: layout styles. The other files in `css/` style one page each.
 - `js/app.js`: the shared `App` object.
 - `js/routes.js`: the list of sections and sub-sections shown in the navigation.
 - `js/router.js`: shows the right page when the address changes.
 - `js/storage.js`: saving and loading data in the browser's local storage.
+- `js/local-videos.js`: your own dance videos for Compare, kept on your device only.
 - `js/pages/`: one file per page. Each page's features go in its own file.
 - `js/pages/schedule/`: the Schedule page (`schedule.js`), its 12-month calendar (`calendar.js`) and the board for one day (`day-board.js`).
-- `js/pages/training/dance/`: the Dance page (`dance.js`), its practice video list (`videos.js`), the YouTube player helpers (`youtube-player.js`), Learn Choreo (`learn-choreo.js`), and the Warming Up and Compare placeholders.
+- `js/pages/training/dance/`: the Dance page (`dance.js`), its practice video list (`videos.js`), the YouTube player helpers (`youtube-player.js`), Learn Choreo (`learn-choreo.js`, `learn-choreo-player.js`), Compare (`compare.js`) and Warm Up and Stretch (`warming-up.js`).
+- `images/warm-up/`: the warm-up drawings.
+- `tests/`: helpers for testing (not used by the app).
+- `CLAUDE.md`: notes for Claude on how this app is built and how we work.
 
 ## Adding a page
 
